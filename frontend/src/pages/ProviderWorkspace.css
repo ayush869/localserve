@@ -1391,3 +1391,111 @@
     width: 100%;
   }
 }
+/* =====================================================
+   NOTIFICATIONS
+===================================================== */
+
+.notification-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.notification-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 20px;
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
+  border-radius: 16px;
+  transition: 0.2s ease;
+}
+
+.notification-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.07);
+}
+
+.notification-icon {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5ff;
+  font-size: 22px;
+}
+
+.notification-content {
+  flex: 1;
+}
+
+.notification-content h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.notification-content p {
+  margin: 0 0 7px;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.notification-content small {
+  color: #999;
+  font-size: 12px;
+}
+
+.notification-status {
+  padding: 7px 12px;
+  border-radius: 20px;
+  background: #f3f3f3;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.notification-status.pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.notification-status.accepted {
+  background: #dff7e8;
+  color: #19733a;
+}
+
+.notification-status.on-the-way {
+  background: #e4efff;
+  color: #2458a6;
+}
+
+.notification-status.in-progress {
+  background: #e8e4ff;
+  color: #5946a8;
+}
+
+.notification-status.completed {
+  background: #dff7e8;
+  color: #19733a;
+}
+
+.notification-status.rejected {
+  background: #ffe4e4;
+  color: #b42318;
+}
+
+@media (max-width: 700px) {
+  .notification-card {
+    align-items: flex-start;
+  }
+
+  .notification-status {
+    margin-left: auto;
+  }
+}

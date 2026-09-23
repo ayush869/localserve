@@ -198,9 +198,36 @@ const updateProviderLocation = async (req, res) => {
     });
   }
 };
+const getProviderById = async (req, res) => {
+  try {
+    const provider = await ServiceProvider.findById(
+      req.params.id
+    ).select("-password");
+
+    if (!provider) {
+      return res.status(404).json({
+        success: false,
+        message: "Provider not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      provider,
+    });
+  } catch (error) {
+    console.error("Get provider error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
 module.exports = {
   registerProvider,
   loginProvider,
   getAllProviders,
-  updateProviderLocation,
+  getProviderById,
 };

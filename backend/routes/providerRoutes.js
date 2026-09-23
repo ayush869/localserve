@@ -5,12 +5,13 @@ const {
   registerProvider,
   loginProvider,
   getAllProviders,
-  updateProviderLocation,
+  getProviderById,
 } = require("../controllers/providerController");
 
 router.post("/register", registerProvider);
 router.post("/login", loginProvider);
 router.get("/", getAllProviders);
-router.put("/:id/location", updateProviderLocation);
+
+router.get("/:id", getProviderById);
 
 module.exports = router;

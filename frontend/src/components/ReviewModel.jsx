@@ -1,68 +1,29 @@
 import { useState } from "react";
-import "./ReviewModal.css";
+import "./ReviewModel.css";
 
-function ReviewModal({ booking, customerId, onClose, onSubmitted }) {
+function ReviewModel({ booking, onClose, onSubmit }) {
   const [rating, setRating] = useState(0);
-  const [hoverRating, setHoverRating] = useState(0);
-  const [comment, setComment] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
+  const [review, setReview] = useState("");
 
-  const submitReview = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
 
     if (rating === 0) {
-      setError("Please select a rating.");
+      alert("Please select a rating");
       return;
     }
 
-    try {
-      setSubmitting(true);
-      setError("");
-
-      const response = await fetch("/api/reviews", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          booking: booking._id,
-          customer: customerId,
-          provider:
-            booking.provider?._id ||
-            booking.provider?.id ||
-            booking.provider,
-          service:
-            booking.service?._id ||
-            booking.service?.id ||
-            booking.service,
-          rating,
-          comment,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message || "Unable to submit review."
-        );
-      }
-
-      onSubmitted(data.review);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setSubmitting(false);
-    }
+    onSubmit({
+      bookingId: booking?._id,
+      rating,
+      review,
+    });
   };
 
   return (
-    <div className="review-overlay" onClick={onClose}>
-      <div
-        className="review-modal"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div className="review-overlay">
+      <div className="review-modal">
+
         <button
           className="review-close"
           onClick={onClose}
@@ -70,103 +31,61 @@ function ReviewModal({ booking, customerId, onClose, onSubmitted }) {
           ×
         </button>
 
-        <span className="review-eyebrow">
-          SERVICE COMPLETED
-        </span>
-
-        <h2>How was your experience?</h2>
-
-        <p className="review-subtitle">
-          Your feedback helps other customers choose
-          reliable local service providers.
-        </p>
-
-        <div className="review-service">
-          <strong>
-            {booking.service?.name || "Service"}
-          </strong>
-
-          <span>
-            with {booking.provider?.name || "Provider"}
-          </span>
+        <div className="review-header">
+          <span>⭐</span>
+          <h2>Rate your experience</h2>
+          <p>
+            How was your experience with this service?
+          </p>
         </div>
 
-        <form onSubmit={submitReview}>
-          <div className="rating-section">
-            <label>Your Rating</label>
+        <div className="rating-container">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <button
+              key={star}
+              type="button"
+              className={`star ${
+                rating >= star ? "selected" : ""
+              }`}
+              onClick={() => setRating(star)}
+            >
+              ★
+            </button>
+          ))}
+        </div>
 
-            <div className="stars">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  type="button"
-                  className={
-                    star <=
-                    (hoverRating || rating)
-                      ? "star active"
-                      : "star"
-                  }
-                  onMouseEnter={() =>
-                    setHoverRating(star)
-                  }
-                  onMouseLeave={() =>
-                    setHoverRating(0)
-                  }
-                  onClick={() => setRating(star)}
-                >
-                  ★
-                </button>
-              ))}
-            </div>
+        <form onSubmit={handleSubmit}>
 
-            {rating > 0 && (
-              <span className="rating-text">
-                {rating === 1 && "Poor"}
-                {rating === 2 && "Below Average"}
-                {rating === 3 && "Good"}
-                {rating === 4 && "Very Good"}
-                {rating === 5 && "Excellent"}
-              </span>
-            )}
-          </div>
-
-          <label className="review-label">
-            Your Review
-          </label>
+          <label>Write a review</label>
 
           <textarea
-            value={comment}
-            onChange={(e) =>
-              setComment(e.target.value)
-            }
+            value={review}
+            onChange={(e) => setReview(e.target.value)}
             placeholder="Tell us about your experience..."
-            maxLength={500}
-            rows={5}
+            rows="5"
           />
 
-          <div className="review-character-count">
-            {comment.length}/500
+          <div className="review-actions">
+            <button
+              type="button"
+              className="cancel-review"
+              onClick={onClose}
+            >
+              Cancel
+            </button>
+
+            <button
+              type="submit"
+              className="submit-review"
+            >
+              Submit Review
+            </button>
           </div>
 
-          {error && (
-            <div className="review-error">
-              {error}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            className="submit-review"
-            disabled={submitting}
-          >
-            {submitting
-              ? "Submitting..."
-              : "Submit Review"}
-          </button>
         </form>
       </div>
     </div>
   );
 }
 
-export default ReviewModal;
+export default ReviewModel;

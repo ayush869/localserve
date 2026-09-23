@@ -1,345 +1,260 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Services.css";
 
-const categories = [
-  "All",
-  "Plumbing",
-  "Electrical",
-  "Carpentry",
-  "Cleaning",
-  "Painting",
-  "Vehicle Repair",
-  "Appliance Repair",
-  "Other",
+const serviceCategories = [
+  {
+    name: "Plumbing",
+    icon: "🔧",
+    description: "Pipes, taps, leaks and water-related services.",
+  },
+  {
+    name: "Electrical",
+    icon: "⚡",
+    description: "Electrical repairs, wiring and installations.",
+  },
+  {
+    name: "Carpentry",
+    icon: "🪚",
+    description: "Furniture, doors, woodwork and repairs.",
+  },
+  {
+    name: "Cleaning",
+    icon: "🧹",
+    description: "Home, office and deep-cleaning services.",
+  },
+  {
+    name: "Painting",
+    icon: "🎨",
+    description: "Interior, exterior and wall painting.",
+  },
+  {
+    name: "Vehicle Repair",
+    icon: "🚗",
+    description: "Local vehicle repair and maintenance.",
+  },
+  {
+    name: "Appliance Repair",
+    icon: "🔌",
+    description: "Repair services for household appliances.",
+  },
 ];
 
 function Services() {
-  const [services, setServices] = useState([]);
-  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
+  const [providers, setProviders] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  const searchFromUrl = searchParams.get("search") || "";
-  const categoryFromUrl = searchParams.get("category") || "All";
-
-  const [search, setSearch] = useState(searchFromUrl);
-  const [selectedCategory, setSelectedCategory] =
-    useState(categoryFromUrl);
 
   useEffect(() => {
-    const fetchServices = async () => {
-      try {
-        setLoading(true);
-        setError("");
-
-        const response = await fetch("/api/services");
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.message || "Unable to fetch services");
-        }
-
-        setServices(data.services || []);
-      } catch (err) {
-        console.error(err);
-        setError("Unable to load services. Please try again.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchServices();
+    fetchProviders();
   }, []);
 
-  useEffect(() => {
-    setSearch(searchFromUrl);
-  }, [searchFromUrl]);
+  const fetchProviders = async () => {
+    try {
+      const response = await fetch("/api/providers");
+      const data = await response.json();
 
-  useEffect(() => {
-    setSelectedCategory(categoryFromUrl);
-  }, [categoryFromUrl]);
-
-  const updateFilters = (newSearch, newCategory) => {
-    const params = {};
-
-    if (newSearch.trim()) {
-      params.search = newSearch.trim();
+      if (data.success) {
+        setProviders(data.providers);
+      }
+    } catch (error) {
+      console.error("Error fetching providers:", error);
+    } finally {
+      setLoading(false);
     }
-
-    if (newCategory !== "All") {
-      params.category = newCategory;
-    }
-
-    setSearchParams(params);
   };
 
-  const filteredServices = useMemo(() => {
-    return services.filter((service) => {
-      const matchesCategory =
-        selectedCategory === "All" ||
-        service.category?.toLowerCase() ===
-          selectedCategory.toLowerCase();
-
-      const searchText = search.toLowerCase().trim();
-
-      const matchesSearch =
-        !searchText ||
-        service.name?.toLowerCase().includes(searchText) ||
-        service.category?.toLowerCase().includes(searchText) ||
-        service.description?.toLowerCase().includes(searchText) ||
-        service.provider?.name?.toLowerCase().includes(searchText);
-
-      return matchesCategory && matchesSearch;
-    });
-  }, [services, search, selectedCategory]);
-
-  const handleCategoryChange = (category) => {
-    setSelectedCategory(category);
-    updateFilters(search, category);
-  };
-
-  const handleSearchChange = (value) => {
-    setSearch(value);
-    updateFilters(value, selectedCategory);
-  };
-
-  const getProviderId = (service) => {
-    if (!service.provider) return null;
-
-    return typeof service.provider === "object"
-      ? service.provider._id
-      : service.provider;
-  };
+  const filteredProviders = selectedCategory
+    ? providers.filter(
+        (provider) =>
+          provider.category?.toLowerCase() ===
+          selectedCategory.toLowerCase()
+      )
+    : [];
 
   return (
-    <div className="services-page">
+    <section className="services-page">
 
-      {/* HEADER */}
-      <section className="services-hero">
-        <div className="services-hero-content">
-          <span className="services-badge">
-            LOCAL SERVICES
-          </span>
+      {/* Hero */}
+      <div className="services-hero">
+        <span className="hero-tag">LOCAL SERVICES</span>
 
-          <h1>
-            Find the right
-            <span> service for you</span>
-          </h1>
+        <h1>
+          Find trusted professionals
+          <span> near you.</span>
+        </h1>
 
-          <p>
-            Explore local professionals and choose a service
-            that matches your requirements.
-          </p>
+        <p>
+          Choose a service and connect with local professionals
+          who can help you get the job done.
+        </p>
+      </div>
 
-          <div className="services-search">
-            <span>🔍</span>
+      {/* Categories */}
+      <div className="services-container">
 
-            <input
-              type="text"
-              placeholder="Search for a service..."
-              value={search}
-              onChange={(e) => handleSearchChange(e.target.value)}
-            />
-
-            {search && (
-              <button
-                onClick={() => handleSearchChange("")}
-                aria-label="Clear search"
-              >
-                ×
-              </button>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* MAIN */}
-      <main className="services-main">
-
-        {/* CATEGORY FILTER */}
-        <div className="category-filter">
-          <div className="filter-heading">
-            <span className="section-label">
-              BROWSE CATEGORIES
-            </span>
-
-            <span className="result-count">
-              {filteredServices.length} services
-            </span>
+        <div className="section-heading">
+          <div>
+            <span>EXPLORE</span>
+            <h2>What service do you need?</h2>
           </div>
 
-          <div className="category-pills">
-            {categories.map((category) => (
-              <button
-                key={category}
-                className={
-                  selectedCategory === category
-                    ? "category-pill active"
-                    : "category-pill"
-                }
-                onClick={() => handleCategoryChange(category)}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* ERROR */}
-        {error && (
-          <div className="services-error">
-            <span>⚠️</span>
-
-            <div>
-              <strong>Something went wrong</strong>
-              <p>{error}</p>
-            </div>
-
-            <button onClick={() => window.location.reload()}>
-              Retry
+          {selectedCategory && (
+            <button
+              className="clear-button"
+              onClick={() => setSelectedCategory("")}
+            >
+              View All
             </button>
-          </div>
-        )}
-
-        {/* LOADING */}
-        {loading && (
-          <div className="services-loading">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <div className="service-skeleton" key={index}>
-                <div className="skeleton-icon"></div>
-                <div className="skeleton-line large"></div>
-                <div className="skeleton-line"></div>
-                <div className="skeleton-line short"></div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* EMPTY */}
-        {!loading &&
-          !error &&
-          filteredServices.length === 0 && (
-            <div className="services-empty">
-              <div className="empty-icon">🔎</div>
-
-              <h2>No services found</h2>
-
-              <p>
-                Try another search term or select a different
-                category.
-              </p>
-
-              <button
-                onClick={() => {
-                  setSearch("");
-                  setSelectedCategory("All");
-                  setSearchParams({});
-                }}
-              >
-                Clear Filters
-              </button>
-            </div>
           )}
+        </div>
 
-        {/* SERVICE GRID */}
-        {!loading &&
-          !error &&
-          filteredServices.length > 0 && (
-            <div className="services-grid">
-              {filteredServices.map((service) => {
-                const providerId = getProviderId(service);
+        <div className="service-grid">
+          {serviceCategories.map((service, index) => {
+            const count = providers.filter(
+              (provider) =>
+                provider.category?.toLowerCase() ===
+                service.name.toLowerCase()
+            ).length;
 
-                return (
-                  <article
-                    className="service-card"
-                    key={service._id}
+            return (
+              <div
+                className={`service-card ${
+                  selectedCategory === service.name
+                    ? "active"
+                    : ""
+                }`}
+                key={service.name}
+                style={{
+                  animationDelay: `${index * 0.08}s`,
+                }}
+                onClick={() =>
+                  setSelectedCategory(service.name)
+                }
+              >
+                <div className="service-icon">
+                  {service.icon}
+                </div>
+
+                <h3>{service.name}</h3>
+
+                <p>{service.description}</p>
+
+                <div className="service-bottom">
+                  <span>
+                    {loading
+                      ? "Loading..."
+                      : `${count} provider${
+                          count !== 1 ? "s" : ""
+                        }`}
+                  </span>
+
+                  <span className="arrow">→</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Providers */}
+        {selectedCategory && (
+          <section className="providers-section">
+
+            <div className="provider-section-title">
+              <div>
+                <span>AVAILABLE PROFESSIONALS</span>
+                <h2>{selectedCategory} Providers</h2>
+              </div>
+
+              <span className="provider-count">
+                {filteredProviders.length} found
+              </span>
+            </div>
+
+            {loading ? (
+              <div className="provider-loading">
+                Finding professionals...
+              </div>
+            ) : filteredProviders.length === 0 ? (
+              <div className="empty-providers">
+                <div>🔍</div>
+
+                <h3>No providers found</h3>
+
+                <p>
+                  We don't have a {selectedCategory.toLowerCase()}
+                  {" "}provider in the system yet.
+                </p>
+              </div>
+            ) : (
+              <div className="provider-grid">
+
+                {filteredProviders.map((provider) => (
+                  <div
+                    className="provider-card"
+                    key={provider._id}
                   >
-                    <div className="service-card-top">
-                      <div className="service-icon">
-                        {service.category === "Plumbing"
-                          ? "🔧"
-                          : service.category === "Electrical"
-                          ? "⚡"
-                          : service.category === "Carpentry"
-                          ? "🪚"
-                          : service.category === "Cleaning"
-                          ? "🧹"
-                          : service.category === "Painting"
-                          ? "🎨"
-                          : service.category ===
-                            "Vehicle Repair"
-                          ? "🚗"
-                          : service.category ===
-                            "Appliance Repair"
-                          ? "🔌"
-                          : "🛠️"}
-                      </div>
+                    <div className="provider-card-top">
 
-                      <span className="service-category">
-                        {service.category}
-                      </span>
-                    </div>
-
-                    <h2>{service.name}</h2>
-
-                    <p className="service-description">
-                      {service.description ||
-                        "Professional local service available through LocalServe."}
-                    </p>
-
-                    <div className="provider-info">
-                      <div className="provider-avatar">
-                        {service.provider?.name
+                      <div className="provider-small-avatar">
+                        {provider.name
                           ?.charAt(0)
-                          ?.toUpperCase() || "P"}
+                          .toUpperCase()}
                       </div>
 
                       <div>
-                        <span>Provided by</span>
+                        <h3>{provider.name}</h3>
 
-                        <strong>
-                          {service.provider?.name ||
-                            "Local Provider"}
-                        </strong>
-                      </div>
-                    </div>
-
-                    <div className="service-bottom">
-                      <div>
-                        <span className="price-label">
-                          Starting from
+                        <span>
+                          {provider.category}
                         </span>
-
-                        <strong className="service-price">
-                          ₹{service.price}
-                        </strong>
                       </div>
 
-                      {providerId ? (
-                        <Link
-                          to={`/providers/${providerId}`}
-                          className="service-button"
-                        >
-                          View Provider →
-                        </Link>
-                      ) : (
-                        <button
-                          className="service-button disabled"
-                          disabled
-                        >
-                          Provider unavailable
-                        </button>
+                      {provider.isAvailable && (
+                        <span className="available-dot">
+                          ●
+                        </span>
                       )}
                     </div>
-                  </article>
-                );
-              })}
-            </div>
-          )}
-      </main>
-    </div>
+
+                    <div className="provider-card-info">
+
+                      <p>
+                        <span>📍</span>
+                        {provider.address || provider.city}
+                      </p>
+
+                      <p>
+                        <span>💼</span>
+                        {provider.experience ||
+                          "Experience not specified"}
+                      </p>
+
+                    </div>
+
+                    <button
+                      className="view-provider-button"
+                      onClick={() =>
+                        navigate(
+                          `/providers/${provider._id}`
+                        )
+                      }
+                    >
+                      View Profile
+                      <span>→</span>
+                    </button>
+                  </div>
+                ))}
+
+              </div>
+            )}
+          </section>
+        )}
+
+      </div>
+    </section>
   );
 }
 

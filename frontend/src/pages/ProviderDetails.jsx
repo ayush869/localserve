@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import "./ProviderDetails.css";
 
 function ProviderDetails() {
@@ -7,213 +7,91 @@ function ProviderDetails() {
   const navigate = useNavigate();
 
   const [provider, setProvider] = useState(null);
-  const [services, setServices] = useState([]);
-  const [selectedService, setSelectedService] = useState(null);
-
   const [loading, setLoading] = useState(true);
-  const [bookingOpen, setBookingOpen] = useState(false);
   const [error, setError] = useState("");
 
-  const [booking, setBooking] = useState({
-    bookingDate: "",
-    bookingTime: "",
-    address: "",
-    description: "",
-  });
-
   useEffect(() => {
-    const fetchProviderData = async () => {
+    const fetchProvider = async () => {
       try {
-        setLoading(true);
-        setError("");
+        const response = await fetch(`/api/providers/${id}`);
+        const data = await response.json();
 
-        // Fetch all providers because your current backend
-        // already has GET /api/providers.
-        const providerResponse = await fetch("/api/providers");
-        const providerData = await providerResponse.json();
-
-        if (!providerResponse.ok) {
-          throw new Error("Unable to load provider");
+        if (!response.ok) {
+          throw new Error(
+            data.message || "Unable to load provider"
+          );
         }
 
-        const foundProvider = providerData.providers?.find(
-          (item) => item._id === id
-        );
-
-        if (!foundProvider) {
-          throw new Error("Provider not found");
-        }
-
-        setProvider(foundProvider);
-
-        const serviceResponse = await fetch(
-          `/api/services/provider/${id}`
-        );
-
-        const serviceData = await serviceResponse.json();
-
-        if (serviceResponse.ok) {
-          setServices(serviceData.services || []);
-        }
-      } catch (err) {
-        console.error(err);
-        setError(err.message || "Unable to load provider details.");
+        setProvider(data.provider);
+      } catch (error) {
+        console.error("Provider details error:", error);
+        setError("Unable to load provider details.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProviderData();
+    fetchProvider();
   }, [id]);
-  
-const openBooking = (service) => {
-  navigate("/booking", {
-    state: {
-      provider,
-      service,
-    },
-  });
-};
-
-  const handleChange = (e) => {
-    setBooking({
-      ...booking,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const submitBooking = async (e) => {
-    e.preventDefault();
-
-    const user = JSON.parse(localStorage.getItem("user"));
-
-    if (!user) {
-      alert("Please login before booking.");
-      return;
-    }
-
-    if (!selectedService) return;
-
-    try {
-      const response = await fetch("/api/bookings", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          customer: user.id,
-          provider: provider._id,
-          service: selectedService._id,
-          bookingDate: booking.bookingDate,
-          bookingTime: booking.bookingTime,
-          location: {
-            address: booking.address,
-            latitude: null,
-            longitude: null,
-          },
-          description: booking.description,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message || "Unable to create booking"
-        );
-      }
-
-      alert("Booking request sent successfully!");
-
-      setBookingOpen(false);
-
-      setBooking({
-        bookingDate: "",
-        bookingTime: "",
-        address: "",
-        description: "",
-      });
-
-      navigate("/bookings");
-    } catch (err) {
-      console.error(err);
-      alert(err.message || "Booking failed.");
-    }
-  };
 
   if (loading) {
     return (
-      <div className="provider-details-loading">
-        <div className="details-loader"></div>
-        <p>Loading provider...</p>
-      </div>
+      <section className="page">
+        <div className="loading-state">
+          Loading provider...
+        </div>
+      </section>
     );
   }
 
   if (error || !provider) {
     return (
-      <div className="provider-details-error">
-        <div>⚠️</div>
-        <h2>Provider unavailable</h2>
-        <p>{error || "Provider could not be found."}</p>
-        <Link to="/services">← Back to Services</Link>
-      </div>
+      <section className="page">
+        <div className="error-state">
+          <h2>Provider not found</h2>
+          <p>{error}</p>
+
+          <button onClick={() => navigate("/services")}>
+            Back to Services
+          </button>
+        </div>
+      </section>
     );
   }
 
   return (
-    <div className="provider-details-page">
+    <section className="provider-details-page">
+      <button
+        className="back-button"
+        onClick={() => navigate(-1)}
+      >
+        ← Back
+      </button>
 
-      {/* BACK */}
-      <div className="provider-topbar">
-        <Link to="/services">
-          ← Back to Services
-        </Link>
-      </div>
-
-      {/* PROVIDER HERO */}
-      <section className="provider-profile-hero">
-
-        <div className="provider-profile-card">
-
-          <div className="provider-avatar-large">
-            {provider.name?.charAt(0)?.toUpperCase()}
+      <div className="provider-details-card">
+        <div className="provider-header">
+          <div className="provider-avatar">
+            {provider.name?.charAt(0).toUpperCase()}
           </div>
 
-          <div className="provider-main-info">
-            <div className="provider-title-row">
-              <h1>{provider.name}</h1>
+          <div>
+            <span className="provider-category">
+              {provider.category}
+            </span>
 
-              {provider.isAvailable && (
-                <span className="available-badge">
-                  <span></span>
-                  Available
-                </span>
-              )}
-            </div>
+            <h1>{provider.name}</h1>
 
-            <p className="provider-category">
-              {provider.category} Service Provider
-            </p>
-
-            <div className="provider-location">
-              📍 {provider.city || "Local Area"}
-              {provider.address &&
-                ` • ${provider.address}`}
-            </div>
+            <p>{provider.city}</p>
           </div>
 
-          <div className="provider-contact">
-            <a href={`tel:${provider.phone}`}>
-              📞 Contact
-            </a>
-          </div>
-
+          {provider.isAvailable && (
+            <span className="availability-badge">
+              ● Available
+            </span>
+          )}
         </div>
 
-        {/* QUICK INFO */}
-        <div className="provider-stats">
-
+        <div className="provider-info-grid">
           <div>
             <span>Experience</span>
             <strong>
@@ -222,117 +100,46 @@ const openBooking = (service) => {
           </div>
 
           <div>
-            <span>Category</span>
-            <strong>{provider.category}</strong>
+            <span>Phone</span>
+            <strong>{provider.phone}</strong>
           </div>
 
           <div>
-            <span>Availability</span>
+            <span>Location</span>
             <strong>
-              {provider.isAvailable
-                ? "Currently Available"
-                : "Unavailable"}
+              {provider.address || provider.city}
             </strong>
           </div>
 
-        </div>
-      </section>
-
-      {/* CONTENT */}
-      <main className="provider-details-content">
-
-        <section className="provider-about">
-
-          <div className="section-heading">
-            <span>ABOUT PROVIDER</span>
-            <h2>Professional service you can request</h2>
+          <div>
+            <span>Working Hours</span>
+            <strong>
+              {provider.availability?.startTime || "09:00"} -{" "}
+              {provider.availability?.endTime || "18:00"}
+            </strong>
           </div>
+        </div>
 
+        <div className="provider-description">
+          <h2>About this provider</h2>
           <p>
             {provider.description ||
-              `${provider.name} provides ${provider.category?.toLowerCase()} services in the local area.`}
+              "Professional local service provider."}
           </p>
+        </div>
 
-        </section>
-
-        {/* SERVICES */}
-        <section className="provider-services">
-
-          <div className="section-heading">
-            <span>AVAILABLE SERVICES</span>
-            <h2>Choose a service</h2>
-          </div>
-
-          {services.length === 0 ? (
-            <div className="no-provider-services">
-              <span>🛠️</span>
-              <h3>No services listed yet</h3>
-              <p>
-                This provider has not added individual services yet.
-              </p>
-            </div>
-          ) : (
-            <div className="provider-service-grid">
-
-              {services.map((service) => (
-                <div
-                  className="provider-service-card"
-                  key={service._id}
-                >
-                  <div className="service-card-icon">
-                    {service.category === "Plumbing"
-                      ? "🔧"
-                      : service.category === "Electrical"
-                      ? "⚡"
-                      : service.category === "Carpentry"
-                      ? "🪚"
-                      : service.category === "Cleaning"
-                      ? "🧹"
-                      : service.category === "Painting"
-                      ? "🎨"
-                      : "🛠️"}
-                  </div>
-
-                  <span className="mini-category">
-                    {service.category}
-                  </span>
-
-                  <h3>{service.name}</h3>
-
-                  <p>
-                    {service.description ||
-                      "Professional local service."}
-                  </p>
-
-                  <div className="provider-service-bottom">
-
-                    <div>
-                      <span>Starting from</span>
-                      <strong>₹{service.price}</strong>
-                    </div>
-
-                    <button
-                      onClick={() => openBooking(service)}
-                      disabled={!provider.isAvailable}
-                    >
-                      {provider.isAvailable
-                        ? "Book Now"
-                        : "Unavailable"}
-                    </button>
-
-                  </div>
-                </div>
-              ))}
-
-            </div>
-          )}
-
-        </section>
-
-      </main>
-
-
-    </div>
+        <div className="provider-actions">
+          <button
+            className="primary-button"
+            onClick={() =>
+              navigate(`/bookings?provider=${provider._id}`)
+            }
+          >
+            Book Service
+          </button>
+        </div>
+      </div>
+    </section>
   );
 }
 
